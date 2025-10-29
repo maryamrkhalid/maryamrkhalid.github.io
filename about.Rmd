@@ -1,0 +1,43 @@
+---
+title: "About Me"
+output: html_document
+---
+
+# About Me
+
+I’m **Maryam R. Khalid**, currently a **Clinical Research Coordinator & Quantitative Biometrics Lab Manager** at the Icahn School of Medicine at Mount Sinai, and a **M.S. Biostatistics student** at Columbia University's Mailman School of Public Health. 
+
+My work focuses on analyzing chronic local field potential (LFP) recordings from deep brain stimulation (DBS) devices to optimize outcomes for treatment-resistant depression (TRD). I integrate neural data with behavioral and clinical outcomes to understand brain rhythms and psychiatric symptom trajectories.
+
+---
+
+## Academic Background
+
+- **M.S. Biostatistics, concentration in Public Health Data Science**, Columbia University – Mailman School of Public Health *(Expected 2027)*  
+- **B.A. Cognitive Science, concentration in Cognitive Neuroscience, minors in Mathematics and Biology**, Rutgers University-New Brunswick
+
+---
+
+## Professional Experience
+
+**Clinical Research Coordinator / Quantitative Biometrics Lab Manager — Ican School of Medicine at Mount Sinai, **  
+*2023–Present*  
+- Analyze local-field-potential (LFP) and EEG time-series data alongside clinical scores in treatment-resistant depression (TRD) patients undergoing deep-brain-stimulation (DBS) to extract features of brain biomarkers to optimize treatment outcomes
+-  Lead data management procedures to streamline multimodal analysis of biometrics such as LFP/EEG brainwave data, breathing patterns, motion-capture, facial features, and voice analysis (NLP) to identify cognitive, motor, premotor, and emotive circuits
+-  Conduct research tasks with various cohorts (depression, OCD, Parkinson’s disease, epilepsy) for several research projects identifying naturalistic behavioral outputs of disease states in patients undergoing neuromodulation treatment
+
+---
+
+## Technical Skills
+
+**Coding:** Proficient in Python, R, MATLAB, and SQL for data cleaning and transformation. Experienced with tidyverse, lme4, geepack, CircaCompare, GLMMcosinor, pandas, numpy, scikit-learn, tsfresh, matplotlib, statsmodels, and signal processing toolboxes. Skilled in database querying, version control in Git, reproducible reporting, R Shiny application development, and high-performance computing environments.
+**Statistics:** Experienced in experimental design and statistical modeling, including generalized linear models, mixed-effects models (LMM/GEE), logistic/Poisson regression, time-series modeling, cosinor & circadian rhythm analysis, nonparametric methods, feature extraction, and power/sample size estimation. Applied advanced analyses in diverse contexts, including OMOP-structured clinical, GWAS, and intracranial LFP datasets.
+**Languages:** Natively fluent in English, Urdu, and Hindi. Self-studying Spanish and Arabic at a conversational level.
+
+---
+
+## Find Me Online
+
+- Email [mk4992@cumc.columbia.edu](mailto:mk4992@cumc.columbia.edu)  
+- Github [GitHub](https://github.com/maryamrkhalid)  
+- LinkedIn [LinkedIn](https://www.linkedin.com/in/maryamrkhalid)

@@ -1,0 +1,17 @@
+name: "Maryam Khalid"
+output_dir: "."
+navbar:
+  title: "Home"
+  right:
+    - text: "About"
+      href: about.html
+    - icon: fa-envelope fa-lg
+      href: mailto:mk4992@cumc.columbia.edu
+    - icon: fa-github fa-lg
+      href: https://github.com/maryamrkhalid
+    - icon: fa-linkedin fa-lg
+      href: https://www.linkedin.com/in/maryamrkhalid
+output:
+  html_document:
+    theme: cerulean
+    highlight: textmate
