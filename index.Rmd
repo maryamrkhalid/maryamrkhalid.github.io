@@ -18,4 +18,4 @@ You can learn more about me [here](about.html), or visit my [GitHub](https://git
 ### 📬 Contact
 - **Email:** [mk4992@cumc.columbia.edu](mailto:mk4992@cumc.columbia.edu)
 - **LinkedIn:** [linkedin.com/in/maryamrkhalid](https://www.linkedin.com/in/maryamrkhalid)
-- **GitHub:** [github.com/maryamrkhalid](https://github.com/maryamrkhalid)
+- **GitHub:** [https://github.com/maryamrkhalid](https://github.com/maryamrkhalid)
