@@ -1,0 +1,221 @@
+---
+title: "NYC Restaurant Inspection Dashboard"
+author: "Maryam Khalid"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(p8105.datasets)
+library(plotly)
+library(janitor)
+library(lubridate)
+library(flexdashboard)
+library(skimr)
+library(shiny)
+
+# Load data from the p8105 package
+data(rest_inspec)
+
+#Preliminary summary BEFORE data cleaning
+glimpse(rest_inspec)
+
+# Summary statistics of numeric variables
+summary(select(rest_inspec, where(is.numeric)))
+
+# Examine counts of missing data of categorical variables
+missing_summary <- rest_inspec %>%
+  summarize(
+    n_total = n(),
+    n_missing_boro = sum(is.na(boro)),
+    n_missing_score = sum(is.na(score)),
+    unique_cuisines = n_distinct(cuisine_description),
+    unique_grades = n_distinct(grade),
+    first_date = min(inspection_date, na.rm = TRUE),
+    last_date  = max(inspection_date, na.rm = TRUE)
+  )
+
+# Check all unique grade codes
+# A: 0-13 pts (highest food safety standards); B: 14-27 pts (needs improvement); C: 28+ pts (significant violations), Z: grade pending since appeal in process; P: grade pending because initial inspection, N: not yet graded/grade not posted; G: grade pending (administrative case); N/A: no grade assigned
+rest_inspec %>%
+  count(grade, sort = TRUE)
+
+# Top 10 most common cuisines
+rest_inspec %>%
+  count(cuisine_description, sort = TRUE) %>%
+  slice_head(n = 10)
+
+#The top ten cuisines are: American, Chinese, Cafe/Coffee/Tea, Pizza, Latin, Mexican, Italian, Caribbean, Japanese, Bakery
+
+#Clean code to:
+#(a) remove unnecessary spatial/administration columns i.e. bin, bbl, nta, community_board, longitude, latitude, council_district
+#(b) consolidate grade codes Z, P, N, G into a single 'pending' category
+#(c) drop observations where both score and grade are missing, since we can't elucidate any information on how compliant the restaurant is or how new it is
+
+rest_df <- rest_inspec %>%
+  clean_names() %>%
+  # remove unnecessary columns
+  select(-bin, -bbl, -nta, -community_board, -record_date,
+         -longitude, -latitude, -council_district, -census_tract) %>%
+  
+  # clean & standardize variables
+  mutate(
+    inspection_date = ymd(inspection_date),
+    grade_date = ymd(grade_date),
+    year = year(inspection_date),
+    boro = str_to_title(boro),
+    
+    # consolidate grade codes
+    grade = case_when(
+      grade %in% c("A", "B", "C") ~ grade,
+      grade %in% c("Z", "P", "N", "G") ~ "Pending",
+      TRUE ~ NA_character_
+    ),
+    grade = factor(grade, levels = c("A", "B", "C", "Pending")),
+    
+    critical_flag = factor(
+      critical_flag,
+      levels = c("Not Critical", "Critical", "Critical Flag")
+    ),
+    
+    # shorten Latin description for latter use
+    cuisine_description = case_when(
+      cuisine_description == "Latin (Cuban, Dominican, Puerto Rican, South & Central American)" ~ "Pan-Latin",
+      TRUE ~ cuisine_description
+    )
+  ) %>%
+  
+  # remove invalid boroughs and rows without info
+  filter(!(is.na(score) & is.na(grade))) %>%
+  filter(!(boro %in% c("0", NA)))
+
+#Successfully cleaned the data with restaurants that ACTUALLY had a score/grade provided. The data ranges from 2013-06-07 to 2019-10-05.
+
+unique(rest_df$boro)
+unique(rest_df$cuisine_description)
+
+```
+
+#### Total Proportion of Restaurants with A, B, and C per Borough (Bar Plot)
+
+```{r}
+renderPlotly({
+  borough_grades <- rest_df %>%
+    filter(grade %in% c("A", "B", "C")) %>%
+    group_by(boro, grade) %>%
+    summarize(n = n(), .groups = "drop") %>%
+    group_by(boro) %>%
+    mutate(prop = n / sum(n))
+
+  p <- ggplot(borough_grades,
+              aes(x = boro, y = prop, fill = grade)) +
+    geom_col(position = "stack", alpha = 0.9) +
+    scale_y_continuous(labels = scales::percent_format()) +
+    scale_fill_manual(
+      values = c("A" = "#2ECC71", 
+                 "B" = "#F1C40F",   
+                 "C" = "#E74C3C")   
+    ) +
+    labs(
+      title = "Distribution of Restaurant Grades by Borough",
+      x = "Borough",
+      y = "Proportion of Restaurants",
+      fill = "Grade"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 14, face = "bold"),
+      axis.text.x = element_text(angle = 20, hjust = 1)
+    )
+
+  ggplotly(p)
+})
+```
+
+#### Trend of Average Inspection Scores over Time (Line Plot)
+
+```{r}
+renderPlotly({
+  avg_score_trend <- rest_df %>%
+    filter(!is.na(score)) %>%
+    group_by(boro, year) %>%
+    summarize(mean_score = mean(score, na.rm = TRUE), .groups = "drop")
+
+  p <- ggplot(avg_score_trend, aes(x = year, y = mean_score, color = boro)) +
+    geom_line(size = 1.2) +
+    geom_point(size = 2) +
+    labs(
+      title = "Average Inspection Scores Over Time by Borough",
+      x = "Year",
+      y = "Average Inspection Score",
+      color = "Borough"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 14, face = "bold")
+    )
+
+  ggplotly(p)
+})
+
+```
+
+#### Distribution of Inspection Scores of Top 10 Most Prevalent Cuisines Via Year/Borough (Box Plot)
+
+```{r}
+#allow user to interact and choose the year/borough
+selectInput("year_input", "Select Year:",
+            choices = sort(unique(rest_df$year)),
+            selected = 2018)
+
+selectInput("borough_input", "Select Borough:",
+            choices = c("All", sort(unique(rest_df$boro))),
+            selected = "All")
+
+renderPlotly({
+  
+  # filter by user-selected year and borough
+  filtered_data <- rest_df %>%
+    filter(year == input$year_input) %>%
+    filter(if (input$borough_input != "All") boro == input$borough_input else TRUE)
+  
+  # identify top 10 most prevalent cuisine types for that subset
+  top10_cuisines <- filtered_data %>%
+    count(cuisine_description, sort = TRUE) %>%
+    slice_head(n = 10) %>%
+    pull(cuisine_description)
+  
+  cuisine_summary <- filtered_data %>%
+    filter(cuisine_description %in% top10_cuisines)
+  
+  p <- ggplot(cuisine_summary, aes(
+    x = reorder(cuisine_description, score, median),
+    y = score,
+    fill = cuisine_description
+  )) +
+    geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+    coord_flip() +
+    labs(
+      title = paste0("Distribution of Inspection Scores of Top 10 Cuisines (", 
+                     input$year_input, 
+                     ifelse(input$borough_input == "All", " - All Boroughs", 
+                            paste0(" - ", input$borough_input)), 
+                     ")"),
+      x = "Cuisine Type",
+      y = "Inspection Score"
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(size = 14, face = "bold")
+    )
+  
+  ggplotly(p)
+})
+
+
+```
