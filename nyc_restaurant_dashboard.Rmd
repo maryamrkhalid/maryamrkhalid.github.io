@@ -103,119 +103,91 @@ unique(rest_df$cuisine_description)
 #### Total Proportion of Restaurants with A, B, and C per Borough (Bar Plot)
 
 ```{r}
-renderPlotly({
-  borough_grades <- rest_df %>%
-    filter(grade %in% c("A", "B", "C")) %>%
-    group_by(boro, grade) %>%
-    summarize(n = n(), .groups = "drop") %>%
-    group_by(boro) %>%
-    mutate(prop = n / sum(n))
+borough_grades <- rest_df %>%
+  filter(grade %in% c("A", "B", "C")) %>%
+  group_by(boro, grade) %>%
+  summarize(n = n(), .groups = "drop") %>%
+  group_by(boro) %>%
+  mutate(prop = n / sum(n))
 
-  p <- ggplot(borough_grades,
-              aes(x = boro, y = prop, fill = grade)) +
-    geom_col(position = "stack", alpha = 0.9) +
-    scale_y_continuous(labels = scales::percent_format()) +
-    scale_fill_manual(
-      values = c("A" = "#2ECC71", 
-                 "B" = "#F1C40F",   
-                 "C" = "#E74C3C")   
-    ) +
-    labs(
-      title = "Distribution of Restaurant Grades by Borough",
-      x = "Borough",
-      y = "Proportion of Restaurants",
-      fill = "Grade"
-    ) +
-    theme_minimal() +
-    theme(
-      plot.title = element_text(size = 14, face = "bold"),
-      axis.text.x = element_text(angle = 20, hjust = 1)
-    )
+p1 <- ggplot(borough_grades,
+             aes(x = boro, y = prop, fill = grade)) +
+  geom_col(position = "stack", alpha = 0.9) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_manual(
+    values = c("A" = "#2ECC71", "B" = "#F1C40F", "C" = "#E74C3C")
+  ) +
+  labs(
+    title = "Distribution of Restaurant Grades by Borough",
+    x = "Borough",
+    y = "Proportion of Restaurants",
+    fill = "Grade"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.text.x = element_text(angle = 20, hjust = 1)
+  )
 
-  ggplotly(p)
-})
+ggplotly(p1)
 ```
 
 #### Trend of Average Inspection Scores over Time (Line Plot)
 
 ```{r}
-renderPlotly({
-  avg_score_trend <- rest_df %>%
-    filter(!is.na(score)) %>%
-    group_by(boro, year) %>%
-    summarize(mean_score = mean(score, na.rm = TRUE), .groups = "drop")
+avg_score_trend <- rest_df %>%
+filter(!is.na(score)) %>%
+group_by(boro, year) %>%
+summarize(mean_score = mean(score, na.rm = TRUE), .groups = "drop")
 
-  p <- ggplot(avg_score_trend, aes(x = year, y = mean_score, color = boro)) +
-    geom_line(size = 1.2) +
-    geom_point(size = 2) +
-    labs(
-      title = "Average Inspection Scores Over Time by Borough",
-      x = "Year",
-      y = "Average Inspection Score",
-      color = "Borough"
-    ) +
-    theme_minimal() +
-    theme(
-      plot.title = element_text(size = 14, face = "bold")
-    )
+p2 <- ggplot(avg_score_trend, aes(x = year, y = mean_score, color = boro)) +
+geom_line(size = 1.2) +
+geom_point(size = 2) +
+labs(
+title = "Average Inspection Scores Over Time by Borough",
+x = "Year",
+y = "Average Inspection Score",
+color = "Borough"
+) +
+theme_minimal() +
+theme(plot.title = element_text(size = 14, face = "bold"))
 
-  ggplotly(p)
-})
+ggplotly(p2)
+
 
 ```
 
-#### Distribution of Inspection Scores of Top 10 Most Prevalent Cuisines Via Year/Borough (Box Plot)
+#### Distribution of Inspection Scores of Top 10 Most Prevalent Cuisines in 2018 (Box Plot)
 
 ```{r}
-#allow user to interact and choose the year/borough
-selectInput("year_input", "Select Year:",
-            choices = sort(unique(rest_df$year)),
-            selected = 2018)
+top10_2018 <- rest_df %>%
+filter(year == 2018) %>%
+count(cuisine_description, sort = TRUE) %>%
+slice_head(n = 10) %>%
+pull(cuisine_description)
 
-selectInput("borough_input", "Select Borough:",
-            choices = c("All", sort(unique(rest_df$boro))),
-            selected = "All")
+cuisine_summary <- rest_df %>%
+filter(year == 2018, cuisine_description %in% top10_2018)
 
-renderPlotly({
-  
-  # filter by user-selected year and borough
-  filtered_data <- rest_df %>%
-    filter(year == input$year_input) %>%
-    filter(if (input$borough_input != "All") boro == input$borough_input else TRUE)
-  
-  # identify top 10 most prevalent cuisine types for that subset
-  top10_cuisines <- filtered_data %>%
-    count(cuisine_description, sort = TRUE) %>%
-    slice_head(n = 10) %>%
-    pull(cuisine_description)
-  
-  cuisine_summary <- filtered_data %>%
-    filter(cuisine_description %in% top10_cuisines)
-  
-  p <- ggplot(cuisine_summary, aes(
-    x = reorder(cuisine_description, score, median),
-    y = score,
-    fill = cuisine_description
-  )) +
-    geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-    coord_flip() +
-    labs(
-      title = paste0("Distribution of Inspection Scores of Top 10 Cuisines (", 
-                     input$year_input, 
-                     ifelse(input$borough_input == "All", " - All Boroughs", 
-                            paste0(" - ", input$borough_input)), 
-                     ")"),
-      x = "Cuisine Type",
-      y = "Inspection Score"
-    ) +
-    theme_minimal() +
-    theme(
-      legend.position = "none",
-      plot.title = element_text(size = 14, face = "bold")
-    )
-  
-  ggplotly(p)
-})
+p3 <- ggplot(cuisine_summary, aes(
+x = reorder(cuisine_description, score, median),
+y = score,
+fill = cuisine_description
+)) +
+geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+coord_flip() +
+labs(
+title = "Distribution of Inspection Scores of Top 10 Cuisines (2018)",
+x = "Cuisine Type",
+y = "Inspection Score"
+) +
+theme_minimal() +
+theme(
+legend.position = "none",
+plot.title = element_text(size = 14, face = "bold")
+)
+
+ggplotly(p3)
 
 
 ```
